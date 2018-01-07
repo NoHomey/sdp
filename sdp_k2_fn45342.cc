@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <iostream>
 #include <cstddef>
 #include <cassert>
@@ -90,11 +89,11 @@ void pretyPrint(const Node* root, std::ostream& out) {
     std::queue<const Node*> nodesAtLevel;
     nodesAtLevel.push(root);
     for (std::size_t level = 1; level <= depth; ++level) {
-        const std::size_t tabsBefore = (1 << (depth - level) - 1);
-        const std::size_t tabsBetween = level != 1 ? (1 << (depth - level + 1) - 1) : 0;
-        const std::size_t levelLength = level != 1 ? (1 << level) : 1;
+        const std::size_t tabsBefore = (1 << (depth - level)) - 1;
+        const std::size_t tabsBetween = level != 1 ? ((1 << (depth - level + 1)) - 1) : 0;
+        const std::size_t levelLength = level != 1 ? (1 << (level - 1)) : 1;
         for (std::size_t tabs = 0; tabs < tabsBefore; ++tabs) {
-            out << '\t';
+            out << ' ';
         }
         for (std::size_t counter = 1; counter <= levelLength; ++counter) {
             const Node* node = nodesAtLevel.front();
@@ -107,16 +106,16 @@ void pretyPrint(const Node* root, std::ostream& out) {
             else {
                 nodesAtLevel.push(nullptr);
                 nodesAtLevel.push(nullptr);
-                out << '\t';
+                out << ' ';
             }
             if (counter != levelLength) {
                 for (std::size_t tabs = 0; tabs < tabsBetween; ++tabs) {
-                    out << '\t';
+                    out << ' ';
                 }
             }
         }
         for (std::size_t tabs = 0; tabs < tabsBefore; ++tabs) {
-            out << '\t';
+            out << ' ';
         }
         out << '\n';
     }
@@ -132,7 +131,7 @@ int main() {
  
     //std::cout << treeDepth(root) << std::endl;
  
-    //pretyPrint(root, std::cout);
+    pretyPrint(root, std::cout);
  
     destroyTree(root);
  
