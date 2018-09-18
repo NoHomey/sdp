@@ -1,0 +1,230 @@
+#pragma once
+
+#include <cstddef>
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+class Heap {
+public:
+    static void sort(T* data, std::size_t size) noexcept;
+
+public:
+    Heap(std::size_t capacity);
+
+    ~Heap() noexcept;
+
+public:
+    bool isEmpty() const noexcept;
+
+    bool isFull() const noexcept;
+
+    const T& peek() const noexcept;
+
+public:
+    T extract() noexcept;
+
+    void insert(const T& data);
+
+    void insert(T&& data);
+
+private:
+    static std::size_t parent(std::size_t index) noexcept;
+
+    static std::size_t left(std::size_t index) noexcept;
+
+    static std::size_t right(std::size_t index) noexcept;
+
+    static void heapify(T* array, std::size_t size, std::size_t index) noexcept;
+
+    static void buildHeap(T* array, std::size_t size) noexcept;
+
+private:
+    bool isValidIndex(std::size_t index) const noexcept;
+
+    bool hasParent(std::size_t index) const noexcept;
+
+    bool hasLeft(std::size_t index) const noexcept;
+
+    bool hasRight(std::size_t index) const noexcept;
+
+private:
+    void pushDown(std::size_t index) noexcept;
+
+    void pullUp(std::size_t index) noexcept;
+
+    void ensureCapacity();
+
+    template<typename Data>
+    void insertData(Data data);
+
+private:
+    T* data;
+    std::size_t size;
+    std::size_t capacity;
+};
+
+
+#include <cassert>
+#include <utility>
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::sort(T* array, std::size_t size) noexcept {
+    buildHeap(array, size);
+    for(std::size_t n = size; n; --n) {
+        std::swap(array[0], array[n - 1]);
+        heapify(array, n - 1, 0);
+    }
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+Heap<T, inOrder>::Heap(std::size_t capacity)
+: data{nullptr}, size{0}, capacity{capacity} {
+    if(capacity) {
+        data = new T[capacity];
+    }
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+Heap<T, inOrder>::~Heap() noexcept {
+    delete[] data;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+bool Heap<T, inOrder>::isEmpty() const noexcept {
+    return !size;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+bool Heap<T, inOrder>::isFull() const noexcept {
+    return size == capacity;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+const T& Heap<T, inOrder>::peek() const noexcept {
+    assert(!isEmpty());
+    return data[0];
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+T Heap<T, inOrder>::extract() noexcept {
+    T extracted = peek();
+    --size;
+    if(size) {
+        std::swap(data[0], data[size]);
+        pushDown(0);
+    }
+    return extracted;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::insert(const T& data) {
+    insertData<const T&>(data);
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::insert(T&& data) {
+    insertData<T&&>(std::move(data));
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+std::size_t Heap<T, inOrder>::parent(std::size_t index) noexcept {
+    return (index - 1) / 2;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+std::size_t Heap<T, inOrder>::left(std::size_t index) noexcept {
+    return index * 2 + 1;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+std::size_t Heap<T, inOrder>::right(std::size_t index) noexcept {
+    return index * 2 + 2;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::heapify(T* array, std::size_t size, std::size_t index) noexcept {
+    assert(array);
+    std::size_t i = index;
+    while(left(i) < size) {
+        std::size_t swapWith = i;
+        if(inOrder(array[left(i)], array[swapWith])) {
+            swapWith = left(i);
+        }
+        if((right(i) < size) && inOrder(array[right(i)], array[swapWith])) {
+            swapWith = right(i);
+        }
+        if(swapWith == i) {
+            break;
+        }
+        std::swap(array[i], array[swapWith]);
+        i = swapWith;
+    }
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::buildHeap(T* array, std::size_t size) noexcept {
+    for(std::size_t i = size / 2; i; --i) {
+        heapify(array, size, i - 1);
+    }
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+bool Heap<T, inOrder>::isValidIndex(std::size_t index) const noexcept {
+    return index < size;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+bool Heap<T, inOrder>::hasParent(std::size_t index) const noexcept {
+    assert(isValidIndex(index));
+    return index;
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+bool Heap<T, inOrder>::hasLeft(std::size_t index) const noexcept {
+    assert(isValidIndex(index));
+    return isValidIndex(left(index));
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+bool Heap<T, inOrder>::hasRight(std::size_t index) const noexcept {
+    assert(isValidIndex(index));
+    return isValidIndex(right(index));
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::pushDown(std::size_t index) noexcept {
+    assert(isValidIndex(index));
+    heapify(data, size, index);
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::pullUp(std::size_t index) noexcept {
+    assert(isValidIndex(index));
+    std::size_t i = index;
+    while(hasParent(i) && inOrder(data[i], data[parent(i)])) {
+        std::swap(data[i], data[parent(i)]);
+        i = parent(i);
+    }
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+void Heap<T, inOrder>::ensureCapacity() {
+    if(isFull()) {
+        std::size_t newCapacity = capacity ? (2 * capacity) : 2;
+        T* tmp = new T[newCapacity];
+        for(std::size_t i = 0; i < capacity; ++i) {
+            tmp[i] = data[i];
+        }
+        delete[] data;
+        data = tmp;
+        capacity = newCapacity;
+    }
+}
+
+template<typename T, bool (*inOrder) (const T&, const T&)>
+template<typename Data>
+void Heap<T, inOrder>::insertData(Data data) {
+    ensureCapacity();
+    this->data[size] = std::forward<Data>(data);
+    ++size;
+    pullUp(size - 1);
+}
